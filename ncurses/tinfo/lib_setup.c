@@ -492,7 +492,7 @@ _nc_update_screensize(SCREEN *sp)
 int
 _nc_setup_tinfo(const char *const tn, TERMTYPE2 *const tp)
 {
-    char filename[PATH_MAX];
+    char filename[PATH_MAX] = "";
     int status = _nc_read_entry2(tn, filename, tp);
 
     /*

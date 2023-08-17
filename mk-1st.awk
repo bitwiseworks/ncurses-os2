@@ -78,6 +78,8 @@ function lib_name_of(a_name) {
 function imp_name_of(a_name) {
 		if (ShlibVerInfix == "cygdll" || ShlibVerInfix == "msysdll" || ShlibVerInfix == "mingw") {
 			result = sprintf("%s%s%s.a", prefix, a_name, suffix);
+		} else if (ShlibVerInfix == "os2dll") {
+			result = sprintf("%s%s", prefix, a_name);
 		} else if (ShlibVerInfix == "msvcdll") {
 			result = sprintf("%s%s%s.lib", prefix, a_name, suffix);
 		} else{
@@ -89,6 +91,8 @@ function imp_name_of(a_name) {
 function abi_name_of(a_name) {
 		if (ShlibVerInfix == "cygdll") {
 			result = sprintf("%s%s$(ABI_VERSION)%s", "cyg", a_name, suffix);
+		} else if (ShlibVerInfix == "os2dll") {
+			result = sprintf("%s%s$(ABI_VERSION)%s", "", a_name, suffix);
 		} else if (ShlibVerInfix == "msysdll") {
 			result = sprintf("%s%s$(ABI_VERSION)%s", "msys-", a_name, suffix);
 		} else if (ShlibVerInfix == "mingw" || ShlibVerInfix == "msvcdll") {
@@ -104,6 +108,8 @@ function abi_name_of(a_name) {
 function rel_name_of(a_name) {
 		if (ShlibVerInfix == "cygdll") {
 			result = sprintf("%s%s$(REL_VERSION)%s", "cyg", a_name, suffix);
+		} else if (ShlibVerInfix == "os2dll") {
+			result = sprintf("%s%s$(REL_VERSION)%s", "", a_name, suffix);
 		} else if (ShlibVerInfix == "msysdll") {
 			result = sprintf("%s%s$(ABI_VERSION)%s", "msys-", a_name, suffix);
 		} else if (ShlibVerInfix == "mingw" || ShlibVerInfix == "msvcdll") {
@@ -124,7 +130,7 @@ function end_name_of(a_name) {
 		} else {
 			if ( ShlibVer == "rel" ) {
 				result = rel_name_of(a_name);
-			} else if ( ShlibVer == "abi" || ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || ShlibVer == "msvcdll" ) {
+			} else if ( ShlibVer == "abi" || ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || ShlibVer == "msvcdll" || ShlibVer == "os2dll" ) {
 				result = abi_name_of(a_name);
 			} else {
 				result = lib_name_of(a_name);
@@ -177,10 +183,20 @@ function removelinks(directory) {
 		}
 	}
 function make_shlib(objs, shlib_list) {
+		if (ShlibVer == "os2dll" ) {
+		printf "\techo LIBRARY $(subst .dll,,$(notdir $@)) INITINSTANCE TERMINSTANCE > export.def\n"
+		printf "\techo DATA MULTIPLE >> export.def\n"
+		printf "\techo EXPORTS >> export.def\n"
+		printf "\temxexp $(%s_OBJS) >> export.def\n", objs
+		printf "\tgcc -g -Zdll export.def -o $@ $(%s_OBJS) $(%s) $(LDFLAGS)\n", objs, shlib_list
+		printf "\temximp -o $(subst $(ABI_VERSION).dll,_dll.a,$@) export.def\n"
+		printf "\temximp -o $(subst $(ABI_VERSION).dll,.lib,$@) export.def\n"
+		} else {
 		printf "\t$(MK_SHARED_LIB) $(%s_OBJS) $(%s)\n", objs, shlib_list
+		}
 	}
 function sharedlinks(directory) {
-		if ( ShlibVer != "auto" && ShlibVer != "cygdll" && ShlibVer != "msysdll" && ShlibVer != "mingw" && ShlibVer != "msvcdll" ) {
+		if ( ShlibVer != "auto" && ShlibVer != "cygdll" && ShlibVer != "msysdll" && ShlibVer != "mingw" && ShlibVer != "msvcdll" && ShlibVer != "os2dll") {
 			printf "\tcd %s && (", directory
 			if ( DoLinks == "reverse" ) {
 				if ( ShlibVer == "rel" ) {
@@ -409,6 +425,15 @@ END	{
 					install_dll("$(bindir)",end_name);
 					install_dll("$(libdir)",imp_name);
 
+				} else if ( ShlibVer == "os2dll" ) {
+
+					dst_dirs = "$(DESTDIR)$(bindir) $(DESTDIR)$(libdir)";
+					printf "install.%s :: %s $(LIBRARIES)\n", name, dst_dirs
+					install_dll("$(bindir)",end_name);
+					install_dll("$(libdir)",imp_name ".a");
+					install_dll("$(libdir)",imp_name ".lib");
+					install_dll("$(libdir)",imp_name "_dll.a");
+
 				} else {
 
 					lib_dir = "$(DESTDIR)$(libdir)";
@@ -423,7 +448,7 @@ END	{
 
 				if ( overwrite == "yes" && name == "ncurses" )
 				{
-					if ( ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || SlibVer == "msvcdll") {
+					if ( ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || SlibVer == "msvcdll" || SlibVer == "os2dll") {
 						if (ShlibVer == "msvcdll") {
 							curses_prefix = ""
 						} else {
@@ -456,6 +481,16 @@ END	{
 
 					printf "\t@echo uninstalling $(DESTDIR)$(libdir)/%s\n", imp_name
 					printf "\t-@rm -f $(DESTDIR)$(libdir)/%s\n", imp_name
+
+				} else if ( ShlibVer == "os2dll" ) {
+
+					printf "\t@echo uninstalling $(DESTDIR)$(bindir)/%s\n", end_name
+					printf "\t-@rm -f $(DESTDIR)$(bindir)/%s\n", end_name
+
+					printf "\t@echo uninstalling $(DESTDIR)$(libdir)/%s\n", imp_name
+					printf "\t-@rm -f $(DESTDIR)$(libdir)/%s.a\n", imp_name
+					printf "\t-@rm -f $(DESTDIR)$(libdir)/%s.lib\n", imp_name
+					printf "\t-@rm -f $(DESTDIR)$(libdir)/%s_dll.a\n", imp_name
 
 				} else {
 					printf "\t@echo uninstalling $(DESTDIR)$(libdir)/%s\n", end_name

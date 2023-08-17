@@ -67,7 +67,11 @@ initscr(void)
 	_nc_globals.init_screen = TRUE;
 
 	env = getenv("TERM");
+#ifdef __KLIBC__
+	(void) VALID_TERM_ENV(env, "os2");
+#else
 	(void) VALID_TERM_ENV(env, "unknown");
+#endif
 
 	if ((name = strdup(env)) == NULL) {
 	    fprintf(stderr, "Error opening allocating $TERM.\n");

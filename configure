@@ -3573,7 +3573,7 @@ ac_main_return="return"
 	# autoconf 2.5x removed the error (hardcoding it to g++, or just blank)
 	if test "$CXX" = "g++" ; then
 		# Extract the first word of "g++", so it can be a program name with args.
-set dummy g++; ac_word=$2
+set dummy g++${ac_exeext}; ac_word=$2
 echo "$as_me:3577: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_path_CXX+set}" = set; then
@@ -4091,7 +4091,7 @@ fi
 if test -z "$ac_cv_path_PKG_CONFIG"; then
   ac_pt_PKG_CONFIG=$PKG_CONFIG
   # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
+set dummy pkg-config${ac_exeext}; ac_word=$2
 echo "$as_me:4095: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_path_ac_pt_PKG_CONFIG+set}" = set; then
@@ -6712,6 +6712,12 @@ EOF
 		exec \$* ${LDFLAGS} -shared -Wl,--out-implib=\${IMPORT_LIB} -Wl,--export-all-symbols -o \${SHARED_LIB}
 CF_EOF
 		chmod +x mk_shared_lib.sh
+		;;
+	(os2*)
+		CC_SHARED_OPTS=
+		MK_SHARED_LIB=
+		cf_cv_shlib_version=os2dll
+		cf_cv_shlib_version_infix=os2dll
 		;;
 	(darwin*)
 		cf_try_cflags="no-cpp-precomp"
@@ -28252,6 +28258,10 @@ echo $ECHO_N "checking default library-dependency suffix... $ECHO_C" >&6
 			DFT_LIB_SUFFIX='.dll'
 			DFT_DEP_SUFFIX='.dll.a'
 			;;
+		(os2*)
+			DFT_LIB_SUFFIX='.dll'
+			DFT_DEP_SUFFIX='_dll.a'
+			;;
 		(darwin*)
 			DFT_LIB_SUFFIX='.dylib'
 			DFT_DEP_SUFFIX=$DFT_LIB_SUFFIX
@@ -28365,6 +28375,10 @@ else
 		(cygwin*|msys*|mingw*)
 			CXX_LIB_SUFFIX='.dll'
 			CXX_DEP_SUFFIX='.dll.a'
+			;;
+		(os2*)
+			CXX_LIB_SUFFIX='.dll'
+			CXX_DEP_SUFFIX='_dll.a'
 			;;
 		(darwin*)
 			CXX_LIB_SUFFIX='.dylib'
@@ -28519,7 +28533,7 @@ fi
 
 if test "$DFT_LWR_MODEL" = shared ; then
 	case "$cf_cv_system_name" in
-	(cygwin*|msys*)
+	(cygwin*|msys*|os2*)
 		# "lib" files have ".dll.a" suffix, "cyg"or "msys-" files have ".dll"
 		TINFO_SUFFIX=.dll
 		;;
@@ -30491,7 +30505,7 @@ fi
 cf_prefix=$LIB_PREFIX
 
 case "$cf_cv_shlib_version" in
-(cygdll|msysdll|mingw|msvcdll)
+(cygdll|msysdll|mingw|msvcdll|os2dll)
 	TINFO_NAME=$TINFO_ARG_SUFFIX
 	TINFO_SUFFIX=.dll
 	;;
@@ -30599,6 +30613,10 @@ CF_EOF
 			cf_suffix='.dll'
 			cf_depsuf='.dll.a'
 			;;
+		(os2*)
+			cf_suffix='.dll'
+			cf_depsuf='_dll.a'
+			;;
 		(darwin*)
 			cf_suffix='.dylib'
 			cf_depsuf=$cf_suffix
@@ -30704,6 +30722,10 @@ eval cf_libname="\$${cf_map_lib_basename}_NAME"
 					cf_cygsuf=`echo "$cf_suffix" | sed -e 's/\.dll/\${ABI_VERSION}.dll/'`
 					cf_add_lib="../lib/msys-${cf_libname}${cf_cygsuf}"
 					;;
+				(os2dll)
+					cf_cygsuf=`echo "$cf_suffix" | sed -e 's/\.dll/\${ABI_VERSION}.dll/'`
+					cf_add_lib="../lib/${cf_libname}${cf_cygsuf}"
+					;;
 				(mingw)
 					cf_cygsuf=`echo "$cf_suffix" | sed -e 's/\.dll/\${ABI_VERSION}.dll/'`
 					cf_add_lib="../lib/lib${cf_libname}${cf_cygsuf}"
@@ -30808,7 +30830,7 @@ cf_ITEM=`echo "$cf_item" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQ
 			CXX_MODEL=$cf_ITEM
 			if test "$CXX_MODEL" = SHARED; then
 				case "$cf_cv_shlib_version" in
-				(cygdll|msysdll|mingw|msvcdll)
+				(cygdll|msysdll|mingw|msvcdll|os2dll)
 					test "x$with_shared_cxx" = xno && test -n "$verbose" && echo "	overriding CXX_MODEL to SHARED" 1>&6
 
 echo "${as_me:-configure}:30814: testing overriding CXX_MODEL to SHARED ..." 1>&5
@@ -30861,6 +30883,10 @@ echo "${as_me:-configure}:30814: testing overriding CXX_MODEL to SHARED ..." 1>&
 		(cygwin*|msys*|mingw*)
 			cf_suffix='.dll'
 			cf_depsuf='.dll.a'
+			;;
+		(os2*)
+			cf_suffix='.dll'
+			cf_depsuf='_dll.a'
 			;;
 		(darwin*)
 			cf_suffix='.dylib'
