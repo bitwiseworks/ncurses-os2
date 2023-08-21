@@ -130,7 +130,12 @@ function end_name_of(a_name) {
 		} else {
 			if ( ShlibVer == "rel" ) {
 				result = rel_name_of(a_name);
-			} else if ( ShlibVer == "abi" || ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || ShlibVer == "msvcdll" || ShlibVer == "os2dll" ) {
+			} else if ( ShlibVer == "abi" || ShlibVer == "cygdll" || ShlibVer == "msysdll" || ShlibVer == "mingw" || ShlibVer == "msvcdll" ) {
+				result = abi_name_of(a_name);
+			} else if ( ShlibVer == "os2dll" ) {
+				if ( a_name == "ncurses++" ) {
+					a_name = "ncurs++"
+				}
 				result = abi_name_of(a_name);
 			} else {
 				result = lib_name_of(a_name);
@@ -184,13 +189,25 @@ function removelinks(directory) {
 	}
 function make_shlib(objs, shlib_list) {
 		if (ShlibVer == "os2dll" ) {
-		printf "\techo LIBRARY $(subst .dll,,$(notdir $@)) INITINSTANCE TERMINSTANCE > export.def\n"
-		printf "\techo DATA MULTIPLE >> export.def\n"
-		printf "\techo EXPORTS >> export.def\n"
-		printf "\temxexp $(%s_OBJS) >> export.def\n", objs
-		printf "\tgcc -g -Zdll export.def -o $@ $(%s_OBJS) $(%s) $(LDFLAGS)\n", objs, shlib_list
-		printf "\temximp -o $(subst $(ABI_VERSION).dll,_dll.a,$@) export.def\n"
-		printf "\temximp -o $(subst $(ABI_VERSION).dll,.lib,$@) export.def\n"
+		# create the timestamp and build maschine name
+		TSbldLevel = sprintf("%s", strftime("%d %b %Y %H:%M:%S", systime()))
+		cmd = "uname -n"
+		cmd | getline unamebldLevel
+		close(cmd)
+		defFile = sprintf("%s.def", name)
+		bldLevelInfo = sprintf("##1## %s\\ \\ \\ \\ \\ %s", TSbldLevel, unamebldLevel)
+		vendor = ENVIRON["VENDOR"]
+		if ( vendor == "") {
+			vendor = "community build"
+		}
+		printf "\techo LIBRARY $(subst .dll,,$(notdir $@)) INITINSTANCE TERMINSTANCE > %s\n", defFile
+                printf "\techo DESCRIPTION \\\"@#%s:$(REL_VERSION)#@%s::::0::@@%s\\\" >> %s\n", vendor, bldLevelInfo, name, defFile
+		printf "\techo DATA MULTIPLE >> %s\n", defFile
+		printf "\techo EXPORTS >> %s\n", defFile
+		printf "\temxexp $(%s_OBJS) >> %s\n", objs, defFile
+		printf "\tgcc -g -Zdll %s -o $@ $(%s_OBJS) $(%s) $(LDFLAGS)\n", defFile, objs, shlib_list
+		printf "\temximp -o ../lib/%s_dll.a %s\n", name, defFile
+		printf "\temximp -o ../lib/%s.lib %s\n", name, defFile
 		} else {
 		printf "\t$(MK_SHARED_LIB) $(%s_OBJS) $(%s)\n", objs, shlib_list
 		}
