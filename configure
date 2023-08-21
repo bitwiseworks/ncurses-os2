@@ -30724,12 +30724,22 @@ eval cf_libname="\$${cf_map_lib_basename}_NAME"
 					;;
 				(os2dll)
 					cf_cygsuf=`echo "$cf_suffix" | sed -e 's/\.dll/\${ABI_VERSION}.dll/'`
-				  if test "$cf_libname" = "ncurses++"
-				  then
-					cf_add_lib="../lib/ncurs++${cf_cygsuf}"
-				  else
-					cf_add_lib="../lib/${cf_libname}${cf_cygsuf}"
-				  fi
+					os2name="${cf_libname}"
+				  case "$cf_libname" in
+				  (ncurses++)
+					if test -n "${LIB_SUFFIX}"; then
+					os2name="ncurs+"
+					else
+					os2name="ncurs++"
+					fi
+					;;
+				  (ncurses)
+					if test -n "${LIB_SUFFIX}"; then
+					os2name="ncurse"
+					fi
+					;;
+				  esac
+					cf_add_lib="../lib/${os2name}${cf_cygsuf}"
 					;;
 				(mingw)
 					cf_cygsuf=`echo "$cf_suffix" | sed -e 's/\.dll/\${ABI_VERSION}.dll/'`

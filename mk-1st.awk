@@ -136,6 +136,12 @@ function end_name_of(a_name) {
 				if ( a_name == "ncurses++" ) {
 					a_name = "ncurs++"
 				}
+				if ( a_name == "ncurses++w" ) {
+					a_name = "ncurs+w"
+				}
+				if ( a_name == "ncursesw" ) {
+					a_name = "ncursew"
+				}
 				result = abi_name_of(a_name);
 			} else {
 				result = lib_name_of(a_name);
