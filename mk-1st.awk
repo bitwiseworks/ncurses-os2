@@ -452,7 +452,7 @@ END	{
 
 					dst_dirs = "$(DESTDIR)$(bindir) $(DESTDIR)$(libdir)";
 					printf "install.%s :: %s $(LIBRARIES)\n", name, dst_dirs
-					install_dll("$(bindir)",end_name);
+					install_dll("$(libdir)",end_name);
 					install_dll("$(libdir)",imp_name ".a");
 					install_dll("$(libdir)",imp_name ".lib");
 					install_dll("$(libdir)",imp_name "_dll.a");
